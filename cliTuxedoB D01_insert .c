@@ -45,4 +45,49 @@ int main(int argc, char **argv){
     tpterm();
     return(1);
   }
+  
+  /* Manejo del Buffer FML */
+  printf ("\nInsertamos datos en buffer FML.");
+  if(Fadd32 (fbfr, CODIGO, (char *)&bib.codigo, 0) < 0){
+    printf ("\n\tError insertando campo FML (CODIGO)");
+    tpfree((char*)fbfr);
+    tpterm();
+    return (0);
+  }
+  if(Fadd32 (fbfr, AUTOR, bib.autor, 0) < 0){
+    printf ("\n\tError insertando campo FML (AUTOR)");
+    tpfree((char*)fbfr);
+    tpterm();
+    return (0);
+  }
+  if(Fadd32 (fbfr, TITULO, bib.titulo, 0) < 0) {
+    printf ("\n\tError insertando campo FML (TITULO)");
+    tpfree((char*)fbfr);
+    tpterm();
+    return (0);
+  }
+  if(Fadd32 (fbfr, DESC, bib.descrp, 0) < 0) {
+    printf ("\n\tError insertando campo FML (DESC)") ;
+    tpfree((char*)fbfr);
+    tpterm();
+    return (0);
+  }
+  // Invocamos el servicio
+  printf("Llamada al servicio 'INSERT_FML32'\n");
+  if(tpcall("INSERT_FML32", (char *)fbfr, 0, (char **)&recv, &lvL_tamLongt,0L) ==-1){
+    printf("Error en la llamada al servicio: tperrno = %d\n", tperrno);
+    tpfree((char *)fbfr);
+    tpfree((char *)recv);
+    tpterm();
+    return (1);
+  }
+  flen = sizeof(msgbuf);
+  Fget32(recv, OUTPUT, 0, (char *)msgbuf, &flen);
+  printf("Respuesta del servidor: %s\n", msgbuf);
+  // Liberamos el buffer y desconectamos de la aplicacion
+  printf("Liberamos Buffer y desconectamos de la aplicacion\n");
+  tpfree((char *)fbfr);
+  tpfree((char *)recv);
+  tpterm();
+  return 0;
 }
