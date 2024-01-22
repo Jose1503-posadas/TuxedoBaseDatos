@@ -50,3 +50,16 @@ $(OBJ)/srvTuxedoBD01.o: $(SRC)/srvTuxedoBD01.c
 I$(ORACLE_HOME)/precomp/public-I$(ORACLE_HOME)/rdbms/public -I../inc -
 I$(TUXDIR)/include -L$(ORACLE_HOME)/lib -L$(TUXDIR)/lib $(SRC)/srvTuxedoBD01.c -o
 $(OBJ)/srvTuxedoBD01.o - lclntsh -lfml32 -ltux
+$(OBJ)/cliTuxedoBD01_insert.o: $(SRC)/cliTuxedoBD01_insert.c
+$(CC)-c-I../inc-I$(TUXDIR)/include $(SRC)/cliTuxedoBD01_insert.c -o
+$(OBJ)/cliTuxedoBD01_insert.o
+$(OBJ)/cliTuxedoBD01_select.o: $(SRC)/cliTuxedoBD01_select.c
+$(CC)-c-I../inc-I$(TUXDIR)/include $(SRC)/cliTuxedoBD01_select.c -o
+$(OBJ)/cliTuxedoBD01_select.o
+
+# Borrado
+clean All: 
+  rm $(OBJ)/*.o
+cleanElem:
+  rm $(OBJ)/srvTuxedoBD01.o $(OBJ)/cliTuxedoBD01_insert.o 
+$(OBJ)/cliTuxedoBD01_select.o
