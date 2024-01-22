@@ -1,1 +1,52 @@
+PROC = $(ORACLE_HOME)/bin/proc
+PROC_CFLAGS   = code=ANSI_C
+PROCINCLUDES  = include=include include=/usr/include sys_include=/usr/include
+include=../inc
+PROCFLAGS     = $(PROC_CFLAGS) $(PROCINCLUDES)
+# Directorios/Rutas
+BIN=../bin
+OBJ=../obj
+SRC=../src
+INC=../inc
+FML=../fml
+CC=gcc
 
+#Generacion de Aplicacion
+all: campos_fml precompila srvTuxedoBD01 cliTuxedoBD01_insert cliTuxedoBD01_select
+
+# Compilacion de Campos FML
+campos_fml: $(FML)/biblioBD01.fml
+  mkfldhdr32 $(FML)/biblioBD01.fml
+  mv biblioBD01.fml.h $(INC)
+
+#Precompila
+precompila:
+  @echo "Precompilando ..."
+  $(PROC) $(PROCFLAGS) include=/usr/include/c++/8/x86_64-redhat-linux
+include=$(ORACLE_HOME)/precomp/public include=$(ORACLE_HOME)/rdbms/public
+include=../inc include=$(TUXDIR)/include $(SRC)/srvTuxedoBD01.pc
+
+#Generacion de Servidores
+srvTuxedoBD01: $(OBJ)/srvTuxedoBD01.o
+    @echo Compilando el servidor srvTuxedoBD01
+    buildserver -v -f $(OBJ)/srvTuxedoBD01.o \
+    -f "-I$(INC)" \
+    -l "-L$(ORACLE_HOME)/lib" \
+    -o "$(BIN)/srvTuxedoBD01 -lclntsh"\
+    -s SELECT_FML32,INSERT_FML32
+
+# Generacion de Clientes
+cliTuxedoBD01_insert: $(OBJ)/cliTuxedoBD01_insert.o
+  @echo Compilando el cliente cliTuxedoBD01_insert
+  buildclient -f $(OBJ)/cliTuxedoBD01_insert.o -o $(BIN)/cliTuxedoBD01_insert
+cliTuxedoBD01_select: $(OBJ)/cliTuxedoBD01_select.o
+  @echo Compilando el cliente cliTuxedoBD01_select
+  buildclient -f $(OBJ)/cliTuxedoBD01_select.o -o $(BIN)/cliTuxedoBD01_select
+
+# Generacion de Ficheros Objeto
+$(OBJ)/srvTuxedoBD01.o: $(SRC)/srvTuxedoBD01.c
+  @echo "Genera objetos ..."
+  $(CC) -c -I/usr/include/c++/8/x86_64-redhat-linux -
+I$(ORACLE_HOME)/precomp/public-I$(ORACLE_HOME)/rdbms/public -I../inc -
+I$(TUXDIR)/include -L$(ORACLE_HOME)/lib -L$(TUXDIR)/lib $(SRC)/srvTuxedoBD01.c -o
+$(OBJ)/srvTuxedoBD01.o - lclntsh -lfml32 -ltux
