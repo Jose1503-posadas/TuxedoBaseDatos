@@ -99,7 +99,7 @@ void cierraConexion(){
   EXEC SQL AT ORACLE2 DISCONNECT;
 }
 
-//imprime la info del erro de SQL
+//imprime la informacion del error de SQL
 void sqlError(const char *msg){
   userlog("%s\n", msg);
   userlog("SQLCODE: %d, SQLERRM: %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
