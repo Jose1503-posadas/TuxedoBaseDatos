@@ -11,12 +11,17 @@
 #include <sqlda.h>
 #include <oraca.h>
 
+//Estructura para conectar con la base de datos 
+typedef struct{
+  char usuario_DB[32];
+  char password_DB[32];
+  char name_DB[32];
+} paramConexion;
+
 EXEC SQL INCLUDE SQLCA;
 EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL DECLARE ORACLE2 DATABASE;
 EXEC SQL END DECLARE SECTION
-
-//falta codigo
 
 int tpsvrinit(int argc, char *argv[]){
   int iRetValue = 0;
