@@ -108,7 +108,7 @@ void sqlError(const char *msg){
 //conexion a la base de datos
 void conectando_aBD(paramConexion *paramCon){
   EXEC SQL CONNECT :paramCon->name_DB IDENTIFIED BY :paramCon->password_DB USING :paramCon->usuario_DB;
-  if (sqlca.sqlcode != 0) {
+  if (sqlca.sqlcode != 0){
     sqlError("Error connectando a la base de datos");
     exit(EXIT_FAILURE);
   }
