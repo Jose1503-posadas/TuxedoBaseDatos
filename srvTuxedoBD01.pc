@@ -23,6 +23,10 @@ EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL DECLARE ORACLE2 DATABASE;
 EXEC SQL END DECLARE SECTION
 
+void cierraConexion();
+void sqlError(const char *msg);
+void conectando_aBD(paramConexion *param);
+
 int tpsvrinit(int argc, char *argv[]){
   int iRetValue = 0;
   paramConexion svL_paramCon;
@@ -87,4 +91,26 @@ void INSERT_FML32(TPSVCINFO *rqst){
   Fchg32(fbfr, OUTPUT, 0, msgbuf, 0);
   cierraConexion();
   tpreturn(TPSUCCESS, 0, rqst->data, strlen(rqst->data), 0);
+}
+
+// Cierra la coneccion de la baseDatos
+void cierraConexion(){
+  EXEC SQL COMMIT WORK RELEASE;
+  EXEC SQL AT ORACLE2 DISCONNECT;
+}
+
+//imprime la info del erro de SQL
+void sqlError(const char *msg){
+  userlog("%s\n", msg);
+  userlog("SQLCODE: %d, SQLERRM: %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
+}
+
+//conexion a la base de datos
+void conectando_aBD(paramConexion *paramCon){
+  EXEC SQL CONNECT :paramCon->name_DB IDENTIFIED BY :paramCon->password_DB USING :paramCon->usuario_DB;
+  if (sqlca.sqlcode != 0) {
+    sqlError("Error connectando a la base de datos");
+    exit(EXIT_FAILURE);
+  }
+  EXEC SQL ALTER SESSION SET CURRENT_SCHEMA = JAPG; 
 }
