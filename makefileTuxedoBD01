@@ -12,7 +12,7 @@ FML=../fml
 CC=gcc
 
 #Generacion de Aplicacion
-all: campos_fml precompila srvTuxedoBD01 cliTuxedoBD01_insert cliTuxedoBD01_select
+all: campos_fml precompila srvTuxedoBD01 cliTuxedoBD01_insert
 
 # Compilacion de Campos FML
 campos_fml: $(FML)/biblioBD01.fml
@@ -39,9 +39,6 @@ srvTuxedoBD01: $(OBJ)/srvTuxedoBD01.o
 cliTuxedoBD01_insert: $(OBJ)/cliTuxedoBD01_insert.o
   @echo Compilando el cliente cliTuxedoBD01_insert
   buildclient -f $(OBJ)/cliTuxedoBD01_insert.o -o $(BIN)/cliTuxedoBD01_insert
-cliTuxedoBD01_select: $(OBJ)/cliTuxedoBD01_select.o
-  @echo Compilando el cliente cliTuxedoBD01_select
-  buildclient -f $(OBJ)/cliTuxedoBD01_select.o -o $(BIN)/cliTuxedoBD01_select
 
 # Generacion de Ficheros Objeto
 $(OBJ)/srvTuxedoBD01.o: $(SRC)/srvTuxedoBD01.c
@@ -53,9 +50,6 @@ $(OBJ)/srvTuxedoBD01.o - lclntsh -lfml32 -ltux
 $(OBJ)/cliTuxedoBD01_insert.o: $(SRC)/cliTuxedoBD01_insert.c
 $(CC)-c-I../inc-I$(TUXDIR)/include $(SRC)/cliTuxedoBD01_insert.c -o
 $(OBJ)/cliTuxedoBD01_insert.o
-$(OBJ)/cliTuxedoBD01_select.o: $(SRC)/cliTuxedoBD01_select.c
-$(CC)-c-I../inc-I$(TUXDIR)/include $(SRC)/cliTuxedoBD01_select.c -o
-$(OBJ)/cliTuxedoBD01_select.o
 
 # Borrado
 clean All: 
