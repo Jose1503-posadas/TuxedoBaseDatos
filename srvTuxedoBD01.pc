@@ -6,111 +6,139 @@
 #include <userlog.h>
 #include <fml32.h>
 #include <tx.h>
+
 #include "biblioBD01.fml.h"
+
 #include <sqlca.h>
 #include <sqlda.h>
 #include <oraca.h>
 
-//Estructura para conectar con la base de datos 
-typedef struct{
-  char usuario_DB[32];
-  char password_DB[32];
-  char name_DB[32];
-} paramConexion;
-
 EXEC SQL INCLUDE SQLCA;
+
 EXEC SQL BEGIN DECLARE SECTION;
 EXEC SQL DECLARE ORACLE2 DATABASE;
-EXEC SQL END DECLARE SECTION
+EXEC SQL END DECLARE SECTION;
 
-void cierraConexion();
-void sqlError(const char *msg);
-void conectando_aBD(paramConexion *param);
+typedef struct {
+    char usuario_DB[50];
+    char password_DB[50];
+    char name_DB[50];
+} paramConexion;
+
+//conectando_aBD
+int conectando_aBD(paramConexion *spA_paramCon){
+ int iRetValue = 0;
+ EXEC SQL BEGIN DECLARE SECTION;
+    char zaO_usuario_[50];
+    char zaO_password[50];
+    char zaO_dbnameBD[50];
+ EXEC SQL END DECLARE SECTION;
+ strcpy(zaO_usuario_, spA_paramCon->usuario_DB);
+ strcpy(zaO_password, spA_paramCon->password_DB);
+ strcpy(zaO_dbnameBD, spA_paramCon->name_DB);
+ EXEC SQL WHENEVER SQLERROR DO iRetValue = sqlError("Error conexion");
+ EXEC SQL CONNECT :zaO_usuario_ IDENTIFIED by:zaO_password 
+ AT ORACLE2 USING :zaO_dbnameBD;
+ return iRetValue;
+}
+
+void cierraConexion(){
+   EXEC SQL WHENEVER SQLERROR CONTINUE;
+   if( !sqlca.sqlcode){
+      EXEC SQL AT ORACLE2 COMMIT WORK RELEASE;
+  }else{
+      EXEC SQL AT ORACLE2 ROLLBACK RELEASE;
+	}
+}
+
+int sqlError(const char*zpA_cadError){
+  char zaL_errorOra[512];
+  long unsigned int ivL_longCadn;
+  long unsigned int ivL_longMens;
+  sqlglm(zaL_errorOra, &ivL_longCadn, &ivL_longMens);
+  printf("ERROR DE SISTEMA, ocurrioun error en BD \n");
+  printf("Error encontrado : %s \n", zpA_cadError);
+  printf("Error de Oracle : %s \n", zaL_errorOra);
+  return-1;
+}//sqlError
 
 int tpsvrinit(int argc, char *argv[]){
-  int iRetValue = 0;
-  paramConexion svL_paramCon;
-  /* Se inicializan acciones en esta funcion */
-  userlog ("Iniciando srvTuxedoBD01D");
-  return(iRetValue);
+   int iRetValue = 0;
+   paramConexion svL_paramCon;
+
+   /* Se inicializan acciones en esta funcion */
+   userlog ("Iniciando srvTuxedoBD01D");
+   return(iRetValue);
 }
 
-void INSERT_FML32(TPSVCINFO *rqst){
-  FLDLEN32 flen;
-  paramConexion svL_paramCon;
-  char msgbuf[256];
-  EXEC SQL BEGIN DECLARE SECTION;
-  int t_codigo;
-  char t_autor[51];
-  char t_titulo[151];
-  char t_desc[251];
-  EXEC SQL END DECLARE SECTION;
-  FBFR32* fbfr = (FBFR32*)rqst->data;
-  strcpy(svL_paramCon.usuario_DB, " ");
-  strcpy(svL_paramCon.password_DB, "21635085Jpg");
-  strcpy(svL_paramCon.name_DB, "JAPG");
-  memset(&t_codigo, 0x00, sizeof(t_codigo));
-  memset(t_autor, 0x00, sizeof(t_autor));
-  memset(t_titulo, 0x00, sizeof(t_titulo));
-  memset(t_desc, 0x00, sizeof(t_desc));
-  userlog ("Servicio INSERT_FML32 Invocado");
-  if(Fget32 (fbfr, CODIGO, 0, (char*)&t_codigo, 0) < 0){
-    userlog ("Error Fget32(CODIGO): %s", Fstrerror32(Ferror32));
-    tpreturn (TPFAIL, 0, rqst->data, 0L, 0);
-  }
-  userlog (" Codigo: [%d]", t_codigo);
-  if(Fget32 (fbfr, AUTOR, 0, t_autor, 0) < 0) {
-    userlog ("Error Fget32(AUTOR): %s", Fstrerror32(Ferror32));
-    tpreturn (TPFAIL, 0, rqst->data, 0L, 0);
-  }
-  userlog (" Autor : [%s]", t_autor) ;
-  if(Fget32 (fbfr, TITULO, 0, t_titulo, 0) < 0){
-    userlog ("Error Fget32(TITULO): %s", Fstrerror32(Ferror32));
-    tpreturn (TPFAIL, 0, rqst->data, 0L, 0);
-  }
-  userlog (" Titulo: [%s]", t_titulo);
-  if(Fget32 (fbfr, DESC, 0, t_desc, 0) < 0){
-    userlog ("Error Fget32(DESC): %s", Fstrerror32(Ferror32));
-    tpreturn (TPFAIL,0, rqst->data, 0L, 0);
-  }
-  userlog (" Desc : [%s]", t_desc) ;
-  userlog ("Conectando a la BD");
-  conectando_aBD(&svL_paramCon);
-  EXEC SQL AT ORACLE2
-  INSERT INTO biblio (codigo, autor, titulo, descrp)
-  VALUES (:t_codigo, :t_autor, :t_titulo, :t_desc) ;
-  if(sqlca.sqlcode != 0){
-    sprintf(msgbuf, "Fallo insert: sqlcode = %d(%s)\n",sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-    sqlError("Error al realizar Insert");
+void INSERT_FML32(TPSVCINFO *rqst) {
+    FLDLEN32 flen;
+    paramConexion svL_paramCon;
+    char msgbuf[256];
+    int iRetValue = 0;
+
+    EXEC SQL BEGIN DECLARE SECTION;
+    int t_codigo;
+    char t_autor[51];
+    char t_titulo[151];
+    char t_desc[251];
+    EXEC SQL END DECLARE SECTION;
+
+    FBFR32* fbfr = (FBFR32*)rqst->data;
+
+    strcpy(svL_paramCon.usuario_DB, "system");
+    strcpy(svL_paramCon.password_DB, "XXXXXXXXXXXXXXX");
+    strcpy(svL_paramCon.name_DB, "JAPG");
+
+    memset(&t_codigo, 0x00, sizeof(t_codigo));
+    memset(t_autor, 0x00, sizeof(t_autor));
+    memset(t_titulo, 0x00, sizeof(t_titulo));
+    memset(t_desc, 0x00, sizeof(t_desc));
+
+    userlog("Servicio INSERT_FML32 Invocado");
+
+    if (Fget32(fbfr, CODIGO, 0, (char*)&t_codigo, 0) < 0){
+        userlog("Error Fget32(CODIGO): %s", Fstrerror32(Ferror32));
+        tpreturn(TPFAIL, 0, rqst->data, 0L, 0);
+    }
+    userlog(" Codigo: [%d]", t_codigo);
+
+    if (Fget32(fbfr, AUTOR, 0, t_autor, 0) < 0){
+        userlog("Error Fget32(AUTOR): %s", Fstrerror32(Ferror32));
+        tpreturn(TPFAIL, 0, rqst->data, 0L, 0);
+    }
+    userlog(" Autor : [%s]", t_autor);
+
+    if (Fget32(fbfr, TITULO, 0, t_titulo, 0) < 0){
+        userlog("Error Fget32(TITULO): %s", Fstrerror32(Ferror32));
+        tpreturn(TPFAIL, 0, rqst->data, 0L, 0);
+    }
+    userlog(" Titulo: [%s]", t_titulo);
+
+    if (Fget32(fbfr, DESC, 0, t_desc, 0) < 0){
+        userlog("Error Fget32(DESC): %s", Fstrerror32(Ferror32));
+        tpreturn(TPFAIL, 0, rqst->data, 0L, 0);
+    }
+    userlog(" Desc : [%s]", t_desc);
+
+    userlog("Conectando a la BD");
+    conectando_aBD(&svL_paramCon);
+
+    EXEC SQL AT ORACLE2
+    INSERT INTO biblio (codigo, autor, titulo, descrp)
+    VALUES (:t_codigo, :t_autor, :t_titulo, :t_desc);
+
+    if (sqlca.sqlcode != 0) {
+        sprintf(msgbuf, "Fallo insert: sqlcode = %d(%s)\n", sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+        sqlError("Error al realizar Insert");
+        Fchg32(fbfr, OUTPUT, 0, msgbuf, 0);
+        cierraConexion();
+        tpreturn(TPFAIL, 0, rqst->data, 0L, 0);
+    }
+
+    strcpy(msgbuf, "Insert exitoso!");
+    userlog("Insert exitoso");
     Fchg32(fbfr, OUTPUT, 0, msgbuf, 0);
     cierraConexion();
-    tpreturn(TPFAIL, 0, rqst->data, 0L, 0);
-  }
-  strcpy(msgbuf, "Insert exitoso!");
-  userlog ("Insert exitoso");
-  Fchg32(fbfr, OUTPUT, 0, msgbuf, 0);
-  cierraConexion();
-  tpreturn(TPSUCCESS, 0, rqst->data, strlen(rqst->data), 0);
-}
-
-// Cierra la coneccion de la baseDatos
-void cierraConexion(){
-  EXEC SQL COMMIT WORK RELEASE;
-  EXEC SQL AT ORACLE2 DISCONNECT;
-}
-
-//imprime la informacion del error de SQL
-void sqlError(const char *msg){
-  userlog("%s\n", msg);
-  userlog("SQLCODE: %d, SQLERRM: %s", sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-}
-
-//conexion a la base de datos
-void conectando_aBD(paramConexion *paramCon){
-  EXEC SQL CONNECT :paramCon->name_DB IDENTIFIED BY :paramCon->password_DB USING :paramCon->usuario_DB;
-  if (sqlca.sqlcode != 0){
-    sqlError("Error connectando a la base de datos");
-    exit(EXIT_FAILURE);
-  }
-  EXEC SQL ALTER SESSION SET CURRENT_SCHEMA = JAPG; 
+    tpreturn(TPSUCCESS, 0, rqst->data, strlen(rqst->data), 0);
 }
